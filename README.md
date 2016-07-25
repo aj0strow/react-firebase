@@ -6,7 +6,7 @@ Personal React bindings for Firebase. Designed to look and feel like `react-redu
 
 React Firebase requires React 0.14 or later.
 
-```
+```sh
 npm install --save aj0strow/react-firebase
 ```
 
@@ -28,7 +28,7 @@ mapFirebaseToProps(props)
 
 For example, to sync reference path `/users/5` with component prop `"user"`:
 
-```
+```js
 function NormalComponent ({ user }) {
   return <p>{ user.name }</p>
 }
