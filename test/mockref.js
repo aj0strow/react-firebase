@@ -1,6 +1,6 @@
 import EventEmitter from "events"
 
-class MockRef extends EventEmitter {
+class MockRef extends EventEmitter {  
   off(event, func) {
     if (event && func) {
       this.removeListener(event, func)

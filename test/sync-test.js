@@ -5,59 +5,92 @@ import assert from "assert"
 import MockRef from "./mockref"
 import TestUtils from "react-addons-test-utils"
 
-class Test extends Component {
-  render() {
-    return <div>
-      <p className={"color"}>{ this.props.color }</p>
-      <p className={"name"}>{ this.props.user.name }</p>
-    </div>
-  }
-}
-
 const render = TestUtils.renderIntoDocument
 const findClassName = TestUtils.findRenderedDOMComponentWithClass
 
-it("should initialize state", () => {  
-  function subscribe () {
-    return { user: new MockRef() }
+function content (elem) {
+  return elem.innerHTML
+}
+
+it("should pass component props", () => {
+  function Test ({ color }) {
+    return <p className={"color"}>{ color }</p>
   }
-  const Synced = sync(subscribe)(Test)
-  const elem = render(<Synced />)
-  const name = findClassName(elem, "name")
-  assert.equal(name.innerHTML, "")
+  const Sync = sync(null)(Test)
+  const elem = render(<Sync color={"red"} />)
+  const color = findClassName(elem, "color")
+  assert.equal(content(color), "red")
 })
 
-it("should update props on firebase event", () => {
+it("should pass merge props", () => {
+  function Test({ color }) {
+    return <p className={"color"}>{ color }</p>
+  }
+  const Sync = sync(null, { color: "blue" })(Test)
+  const elem = render(<Sync />)
+  const color = findClassName(elem, "color")
+  assert.equal(content(color), "blue")
+})
+
+it("should update props on firebase value", () => {
+  function Test({ user }) {
+    return <p className={"name"}>{ user ? user.name : "..." }</p>
+  }
   const ref = new MockRef()
-  function subscribe () {
-    return { user: ref }
+  function mapFirebase() {
+    return {
+      user: ref,
+    }
   }
-  const Synced = sync(subscribe)(Test)
-  const elem = render(<Synced />)
-  ref.simulate("value", { name: "AJ" })
-  
+  const Sync = sync(mapFirebase)(Test)
+  const elem = render(<Sync />)
+  const name1 = findClassName(elem, "name")
+  assert.equal(content(name1), "...")
+  const user = {
+    name: "AJ"
+  }
+  ref.simulate("value", user)
+  const name2 = findClassName(elem, "name")
+  assert.equal(content(name2), "AJ")
+})
+
+it("should overwrite default merge props", () => {
+  function Test({ user }) {
+    return <p className={"name"}>{ user.name }</p>
+  }
+  const ref = new MockRef()
+  function mapFirebase() {
+    return {
+      user: ref,
+    }
+  }
+  const Sync = sync(mapFirebase, { user: {} })(Test)
+  const elem = render(<Sync />)
+  const user = {
+    name: "Gary"
+  }
+  ref.simulate("value", user)
   const name = findClassName(elem, "name")
-  assert.equal(name.innerHTML, "AJ")
+  assert.equal(content(name), "Gary")
 })
 
-it("should pass element props", () => {  
-  function subscribe() {
-    return { user: new MockRef() }
+it("should use default merge prop when null", () => {
+  function Test({ user }) {
+    return <p className={"name"}>{ user.name }</p>
   }
-  const Synced = sync(subscribe)(Test)
-  const elem = render(<Synced color={"red"} />)
-  
-  const color = findClassName(elem, "color")
-  assert.equal(color.innerHTML, "red")
-})
-
-it("should pass extra props", () => {
-  function subscribe() {
-    return { user: new MockRef() }
+  const ref = new MockRef()
+  function mapFirebase() {
+    return {
+      user: ref,
+    }
   }
-  const Synced = sync(subscribe, { color: "blue" })(Test)
-  const elem = render(<Synced />)
-  
-  const color = findClassName(elem, "color")
-  assert.equal(color.innerHTML, "blue")
+  const Sync = sync(mapFirebase, { user: {} })(Test)
+  const elem = render(<Sync />)
+  const user = {
+    name: "Tal"
+  }
+  ref.simulate("value", user)
+  ref.simulate("value", null)
+  const name = findClassName(elem, "name")
+  assert.equal(content(name), "")
 })

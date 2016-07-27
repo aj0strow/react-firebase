@@ -134,6 +134,28 @@ When using decorators, make sure to stack in the correct order.
 class Component {}
 ```
 
+### Default Merge Props
+
+Firebase allows primitive values, which means it would be incorrect to initialize to an empty object. To avoid empty collections breaking required component props, provide a merge property that is overridden with firebase data. 
+
+```js
+class Forum extends Component {
+  static propTypes = {
+    posts: PropTypes.object.isRequired
+  };
+}
+
+function mapFirebase () {
+  return {
+    posts: firebase.ref("posts/thread:1231232").limitToFirst(100)
+  }
+}
+
+sync(mapFirebase, { posts: {} })(Component)
+```
+
+The component will receive empty posts to start, and then eventually actual data once it loads. 
+
 ### License
 
 MIT

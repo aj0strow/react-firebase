@@ -6,15 +6,18 @@ function getDisplayName (WrappedComponent) {
 }
 
 export function sync(mapFirebaseToProps, mergeProps) {
+  if (!mapFirebaseToProps) {
+    mapFirebaseToProps = function () {
+      return {}
+    }
+  }
+  
   return function(WrappedComponent) {
     class Sync extends Component {
       componentWillMount() {
         this.state = {
           firebase: {}
         }
-        keys(mapFirebaseToProps(this.props)).forEach(key => {
-          this.setFirebase(key, {})
-        })
         this.subscribe(this.props)
       }
       
@@ -28,10 +31,13 @@ export function sync(mapFirebaseToProps, mergeProps) {
       }
       
       setFirebase(key, value) {
+        let firebase = assign({}, this.state.firebase)
         if (value) {
-          const firebase = assign({}, this.state.firebase, { [key]: value })
-          this.setState({ firebase })
+          firebase[key] = value
+        } else {
+          delete firebase[key]
         }
+        this.setState({ firebase })
       }
       
       subscribe(props) {
