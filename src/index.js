@@ -15,6 +15,7 @@ export function sync(mapFirebaseToProps, mergeProps) {
   return function(WrappedComponent) {
     class Sync extends Component {
       componentWillMount() {
+        this.data = {}
         this.state = {
           firebase: {}
         }
@@ -31,13 +32,14 @@ export function sync(mapFirebaseToProps, mergeProps) {
       }
       
       setFirebase(key, value) {
-        let firebase = assign({}, this.state.firebase)
         if (value) {
-          firebase[key] = value
+          this.data[key] = value
         } else {
-          delete firebase[key]
+          delete this.data[key]
         }
-        this.setState({ firebase })
+        this.setState({
+          firebase: assign({}, this.data)
+        })
       }
       
       subscribe(props) {
