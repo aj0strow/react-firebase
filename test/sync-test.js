@@ -7,6 +7,7 @@ import TestUtils from "react-addons-test-utils"
 
 const render = TestUtils.renderIntoDocument
 const findClassName = TestUtils.findRenderedDOMComponentWithClass
+const { keys } = Object
 
 function content (elem) {
   return elem.innerHTML
@@ -93,4 +94,88 @@ it("should use default merge prop when null", () => {
   ref.simulate("value", null)
   const name = findClassName(elem, "name")
   assert.equal(content(name), "")
+})
+
+it("should bind to auth events", () => {
+  function Test({ auth }) {
+    return <div>
+      { auth ? <p className={"name"}>{ auth.name }</p> : null }
+    </div>
+  }
+  const ref = new MockRef()
+  function mapFirebase() {
+    return {
+      auth: {
+        query: ref,
+        event: "auth",
+      }
+    }
+  }
+  const Sync = sync(mapFirebase)(Test)
+  const elem = render(<Sync />)
+  assert.throws(() => {
+    findClassName(elem, "name")
+  }, /class:name/)
+  
+  ref.emit("auth", { name: "Tal" })
+  const name = findClassName(elem, "name")
+  assert.equal(content(name), "Tal")
+})
+
+it("should bind to child events", () => {
+  function Test({ items }) {
+    return <div>
+    {
+      keys(items).map(key => {
+        const item = items[key]
+        return <p className={"item"} key={item.id}>{ item.name }</p>
+      })
+    }
+    </div>
+  }
+  const ref = new MockRef()
+  function mapFirebase() {
+    return {
+      items: {
+        query: ref,
+        event: "child_events",
+      }
+    }
+  }
+  const Sync = sync(mapFirebase, { items: {} })(Test)
+  const elem = render(<Sync />)
+  
+  const items = {
+    "1": {
+      id: "1",
+      name: "orange",
+    },
+    "2": {
+      id: "2",
+      name: "apple",
+    },
+  }
+  
+  function toSnap (key, val) {
+    return {
+      key() { return key },
+      val() { return val },
+    }
+  }
+  
+  function getItems() {
+    return TestUtils.scryRenderedDOMComponentsWithClass(elem, "item")
+  }
+  
+  ref.emit("child_added", toSnap("1", items["1"]))
+  assert.equal(getItems().length, 1)
+  
+  ref.emit("child_added", toSnap("2", items["2"]))
+  assert.equal(getItems().length, 2)
+  
+  ref.emit("child_updated", toSnap("2", items["2"]))
+  assert.equal(getItems().length, 2)
+  
+  ref.emit("child_removed", toSnap("1", null))
+  assert.equal(getItems().length, 1)
 })

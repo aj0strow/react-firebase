@@ -1,6 +1,6 @@
 {
   "name": "react-firebase",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "license": "MIT",
   "repository": "https://github.com/aj0strow/react-firebase",
   "main": "./lib/index.js",

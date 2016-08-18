@@ -156,6 +156,59 @@ sync(mapFirebase, { posts: {} })(Component)
 
 The component will receive empty posts to start, and then eventually actual data once it loads. 
 
+### Bind Auth State
+
+The default mapping is to bind on `value`. 
+
+```js
+{
+  user: firebase.database().ref(`users/5`)
+}
+
+// same as
+
+{
+  user: {
+    query: firebase.database().ref(`users/5`),
+    event: "value",
+  }
+}
+```
+
+To bind on auth state, use the pseudo event `auth`.
+
+```js
+sync(function () {
+  return {
+    auth: {
+      query: firebase.ref(),
+      event: "auth",
+    }
+  }
+})
+```
+
+The component will receive `auth` whenever `onAuth` fires. 
+
+### Bind Child Events
+
+If you want to load a collection incrementally, use `child_events`.
+
+```js
+sync(function () {
+  return {
+    items: {
+      query: firebase.ref("items"),
+      event: "child_events",
+    }
+  }
+}, {
+  items: {},
+})
+```
+
+The component will receive `items` whenever any of `child_added`, `child_removed`, `child_updated` fires. It ignores `child_moved` under the assumption you perform client-side ordering in the render function. 
+
 ### License
 
 MIT

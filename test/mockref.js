@@ -17,6 +17,18 @@ class MockRef extends EventEmitter {
     }
     this.emit(event, snap)
   }
+  
+  onAuth(func) {
+    this.on("auth", func)
+  }
+  
+  offAuth(func) {
+    this.off("auth", func)
+  }
+  
+  toString() {
+    return "https://mock.firebaseio.com/"
+  }
 }
 
 export default MockRef
