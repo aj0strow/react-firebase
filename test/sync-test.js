@@ -179,3 +179,27 @@ it("should bind to child events", () => {
   ref.emit("child_removed", toSnap("1", null))
   assert.equal(getItems().length, 1)
 })
+
+it("should post process data", () => {
+  function Test({ status }) {
+    return <p className={"status"}>{ status }</p>
+  }
+  const ref = new MockRef()
+  function mapFirebase () {
+    return {
+      status: {
+        query: ref,
+        event: "value",
+        postprocess(val) {
+          return val.toUpperCase()
+        },
+      }
+    }
+  }
+  const Sync = sync(mapFirebase)(Test)
+  const elem = render(<Sync />)
+  ref.simulate("value", "ok")
+  
+  const status = findClassName(elem, "status")
+  assert.equal(content(status), "OK")
+})

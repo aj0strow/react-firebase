@@ -9,6 +9,10 @@ function startsWith(a, b) {
   return a.slice(0, b.length) == b
 }
 
+function identity (x) {
+  return x
+}
+
 export function sync(mapFirebaseToProps, mergeProps) {
   if (!mapFirebaseToProps) {
     mapFirebaseToProps = function () {
@@ -69,25 +73,26 @@ export function sync(mapFirebaseToProps, mergeProps) {
         if (startsWith(mapping.toString(), "https")) {
           mapping = { query: mapping, event: "value" }
         }
-        const { query, event } = mapping
+        mapping = assign({ postprocess: identity }, mapping)
+        const { event, query } = mapping
         if (!query) {
           panic("missing query for key: " + key)
         }
         switch (event) {
         case "auth":
-          return this.bindAuth(key, query)
+          return this.bindAuth(key, mapping)
         case "value":
-          return this.bindValue(key, query)
+          return this.bindValue(key, mapping)
         case "child_events":
-          return this.bindChildEvents(key, query)
+          return this.bindChildEvents(key, mapping)
         default:
           panic("invalid sync event: " + event)
         }
       }
       
-      bindAuth (key, query) {
+      bindAuth (key, { query, postprocess }) {
         const setAuth = (auth) => {
-          this.setFirebase(key, auth)
+          this.setFirebase(key, postprocess(auth))
         }
         query.onAuth(setAuth)
         return function () {
@@ -95,28 +100,20 @@ export function sync(mapFirebaseToProps, mergeProps) {
         }
       }
       
-      bindValue (key, query) {
+      bindValue (key, { query, postprocess }) {
         const setValue = (snap) => {
-          this.setFirebase(key, snap.val())
+          this.setFirebase(key, postprocess(snap.val()))
         }
         query.on("value", setValue)
         return function () {
           query.off("value", setValue)
         }
-        
-        const callback = (snap) => {
-          this.setFirebase(key, snap.val())
-        }
-        query.on("value", callback)
-        return function () {
-          query.off("value", callback)
-        }
       }
       
-      bindChildEvents(key, query) {
+      bindChildEvents(key, { query, postprocess }) {
         const setChild = (snap) => {
           const data = assign({}, this.data[key])
-          data[snap.key()] = snap.val()
+          data[snap.key()] = postprocess(snap.val())
           this.setFirebase(key, data)
         }
         const removeChild = (snap) => {

@@ -209,6 +209,20 @@ sync(function () {
 
 The component will receive `items` whenever any of `child_added`, `child_removed`, `child_updated` fires. It ignores `child_moved` under the assumption you perform client-side ordering in the render function. 
 
+### Post-Process Data
+
+Sometimes you want to modify the data before it's passed to the component, for example passing into a model constructor or camel-casing the keys. The default `postprocess` is the identity function.
+
+```js
+{
+  auth: {
+    query: firebase.database.ref(),
+    event: "auth",
+    postprocess: camelCaseKeys,
+  }
+}
+```
+
 ### License
 
 MIT
