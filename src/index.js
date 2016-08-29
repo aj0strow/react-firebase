@@ -43,6 +43,10 @@ export function sync(mapFirebaseToProps, mergeProps) {
         this.unsubscribe()
       }
       
+      cancelCallback (query, key, err) {
+        panic("permission denied: " + key + ", " + query.toString())
+      }
+      
       getFirebase(key) {
         return this.data[key]
       }
@@ -104,7 +108,10 @@ export function sync(mapFirebaseToProps, mergeProps) {
         const setValue = (snap) => {
           this.setFirebase(key, postprocess(snap.val()))
         }
-        query.on("value", setValue)
+        const onError = (err) => {
+          this.cancelCallback(query, key, err)
+        }
+        query.on("value", setValue, onError)
         return function () {
           query.off("value", setValue)
         }
